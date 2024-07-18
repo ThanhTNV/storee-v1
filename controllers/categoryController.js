@@ -1,14 +1,61 @@
 const asyncHandler = require("express-async-handler");
-const { body, validationResult } = require("express-validator");
+const { query, body, validationResult } = require("express-validator");
+const url = require("url");
 const Category = require("../models/category");
 const Product = require("../models/product");
 
-// GET request for creating a Category
-exports.category_create_get = asyncHandler(async (req, res, next) => {
-  res.status(200);
-  res.type("text/plain");
-  res.send("GET - CREATE CATEGORY NOT IMPLEMENT");
-});
+// GET request query for creating a Category
+exports.category_create_get = [
+  query("name", "Category name must contain at least 1 character")
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .escape(),
+  query("description", "Category name must contain at least 1 character")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+
+  asyncHandler(async (req, res, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(req);
+
+    const new_category = new Category({
+      name: url.parse(req.url, true).query.name,
+      description: url.parse(req.url, true).query.description,
+    });
+
+    // Return error if data is not valid
+    if (!errors.isEmpty()) {
+      // There are errors. Render the form again with sanitized values/error messages.
+      res.send({
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      const exist_category = await Category.findOne({
+        name: new_category.name,
+      })
+        .collation({ locale: "en", strength: 2 })
+        .exec();
+      if (exist_category) {
+        res.redirect(`${exist_category.url}`);
+      } else {
+        //Save to database
+        try {
+          const save_category = await new_category.save();
+          res.status(201).json({
+            category: save_category
+          });
+        } catch (error) {
+          res.status(500).json({
+            message: "Error saving category",
+            error: error.message,
+          });
+        }
+      }
+    }
+  }),
+];
 
 // POST request for creating Category
 exports.category_create_post = [
@@ -67,17 +114,57 @@ exports.category_create_post = [
 
 // GET request to delete Category
 exports.category_delete_get = asyncHandler(async (req, res, next) => {
-  res.status(200);
-  res.type("text/plain");
-  res.send("GET - delete Category NOT IMPLEMENT");
+  const [category, cate_products] = await Promise.all([
+    Category.findById(req.params.id).exec(),
+    Product.find({category: req.params.id}).exec()
+  ]);
+
+  if(category === null) {
+    return next(new Error('Category not found'));
+  }
+
+  if(cate_products.length > 0) {
+    res.status(400).json({
+      category: category,
+      category_products: cate_products
+    });
+  } else {
+    Category.findByIdAndDelete(req.params.id).exec();
+    res.status(201).json({
+      deleted_category: category
+    });
+  }
 });
 
 // POST request to delete Category
-exports.category_delete_post = asyncHandler(async (req, res, next) => {
-  res.status(200);
-  res.type("text/plain");
-  res.send("POST - delete Category NOT IMPLEMENT");
-});
+exports.category_delete_post = [
+  body("id").escape(),
+
+  asyncHandler(async (req, res, next) => {
+    const error = validationResult(req);
+
+    const [category, cate_products] = await Promise.all([
+      Category.findById(req.body.id).exec(),
+      Product.find({category: req.body.id}, 'name description').exec()
+    ]);
+  
+    if(category === null) {
+      return next(new Error('Category not found'));
+    }
+  
+    if(cate_products.length > 0) {
+      res.status(400).json({
+        category: category,
+        category_products: cate_products
+      });
+    } else {
+      await Category.findByIdAndDelete(req.body.id).exec();
+      res.status(201).json({
+        deleted_category: category
+      })
+    }
+  })
+]
 
 // GET request to update Category
 exports.category_update_get = asyncHandler(async (req, res, next) => {
