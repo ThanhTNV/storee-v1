@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const OrderSchema = new Schema({
@@ -6,7 +6,16 @@ const OrderSchema = new Schema({
   customer_email: { type: String, required: true },
   customer_address: { type: String, required: true },
   order_date: { type: Date, default: Date.now },
-  status: { type: String, required: true, enum: ['Pending', 'Shipped', 'Delivered', 'Cancelled'], default: 'Pending' },
+  status: {
+    type: String,
+    required: true,
+    enum: ["Pending", "Shipped", "Delivered", "Cancelled"],
+    default: "Pending",
+  },
 });
 
-module.exports = mongoose.model('Order', OrderSchema);
+OrderSchema.virtual("url").get(function () {
+  return `/storee/order/${this._id}`;
+});
+
+module.exports = mongoose.model("Order", OrderSchema);

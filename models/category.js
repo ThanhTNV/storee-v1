@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const CategorySchema = new Schema({
@@ -6,4 +6,8 @@ const CategorySchema = new Schema({
   description: { type: String, required: true },
 });
 
-module.exports = mongoose.model('Category', CategorySchema);
+CategorySchema.virtual("url").get(function () {
+  return `/storee/category/${this._id}`;
+});
+
+module.exports = mongoose.model("Category", CategorySchema);

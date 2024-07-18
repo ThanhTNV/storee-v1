@@ -52,14 +52,14 @@ exports.orderdetail_detail = asyncHandler(async (req, res, next) => {
     .populate("product")
     .populate("order")
     .exec();
-    if(order_detail === null){
-        return next(new Error('Order detail not found').status(404));
-    } else {
-        res.status(200);
-        res.json({
-            order_detail: order_detail
-        })
-    }
+  if (order_detail === null) {
+    return next(new Error("Order detail not found").status(404));
+  } else {
+    res.status(200);
+    res.json({
+      order_detail: order_detail,
+    });
+  }
 });
 
 // GET request for list of all ORDER details

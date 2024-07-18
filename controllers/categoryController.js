@@ -12,38 +12,54 @@ exports.category_create_get = asyncHandler(async (req, res, next) => {
 
 // POST request for creating Category
 exports.category_create_post = [
-  //Validate an santinize data
-  body("name")
+  // Validate and sanitize the name field.
+  body("name", "Category name must contain at least 1 character")
     .trim()
     .isLength({ min: 1, max: 100 })
-    .withMessage("Name must be at least 1 character and maxium 100 characters.")
-    .escape()
-    .withMessage("Name must be specified."),
-  body("description").trim().escape(),
+    .escape(),
+  body("description", "Category name must contain at least 1 character")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
 
-  //catch error
+  // Process request after validation and sanitization.
   asyncHandler(async (req, res, next) => {
-    //Extract error from request validation
-    const err = validationResult(req);
+    // Extract the validation errors from a request.
+    const errors = validationResult(req);
 
     const new_category = new Category({
       name: req.body.name,
       description: req.body.description,
     });
 
-    //Return error if data is not valid
-    if (!err.isEmpty()) {
-      res.status(400).json({ errors: err.array() });
+    // Return error if data is not valid
+    if (!errors.isEmpty()) {
+      // There are errors. Render the form again with sanitized values/error messages.
+      res.send({
+        errors: errors.array(),
+      });
+      return;
     } else {
-      //Save to database
-      try {
-        const saveCategory = await new_category.save();
-        res.status(201).json(saveCategory);
-      } catch (error) {
-        res.status(500).json({
-          message: "Error saving category",
-          error: error.message,
-        });
+      const exist_category = await Category.findOne({
+        name: new_category.name,
+      })
+        .collation({ locale: "en", strength: 2 })
+        .exec();
+      if (exist_category) {
+        res.redirect(`${exist_category.url}`);
+      } else {
+        //Save to database
+        try {
+          const save_category = await new_category.save();
+          res.status(201).json({
+            category: save_category,
+          });
+        } catch (error) {
+          res.status(500).json({
+            message: "Error saving category",
+            error: error.message,
+          });
+        }
       }
     }
   }),

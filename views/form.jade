@@ -1,0 +1,11 @@
+extends layout
+
+block content
+    form(action="/storee/category/create", method="post")
+        p Name 
+            input(type="text", name="name")
+        br
+        p Description 
+            input(type="text", name="description")
+        br
+        button(type="submit") Submit

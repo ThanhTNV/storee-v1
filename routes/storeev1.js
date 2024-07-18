@@ -7,33 +7,6 @@ const product_controller = require("../controllers/productController");
 const order_controller = require("../controllers/orderController");
 const orderDetail_controller = require("../controllers/orderDetailController");
 
-/// TESTING EXPRESS-VALIDATOR ///
-const asyncHandler = require("express-async-handler");
-const { body, validationResult } = require("express-validator");
-router.post(
-  "/create",
-  [
-    body("name")
-      .trim()
-      .isLength({ min: 1 })
-      .escape(),
-    body("description")
-      .trim()
-      .isLength({ min: 1 })
-  ],
-  (req, res) => {
-    console.log(req.body);
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    res.send("Validation passed");
-  }
-);
-/// TESTING EXPRESS-VALIDATOR ///
-
 /// GET LANDING ROUTES ///
 router.get("/", (req, res) => {
   res.render("index", {
