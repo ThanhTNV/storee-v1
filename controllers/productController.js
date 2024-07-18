@@ -48,14 +48,26 @@ exports.product_update_post = asyncHandler(async (req, res, next) => {
 
 // GET request for one ORDER
 exports.product_detail = asyncHandler(async (req, res, next) => {
-    res.statusCode(200);
-    res.type("text/plain");
-    res.send("GET - ORDER NOT IMPLEMENT");
+    const product = await Product.find().populate('category').exec();
+
+    if(product === null) {
+        return next(new Error('Product not found').status(404));
+    } else {
+        res.status(200).json({
+            product: product
+        })
+    }
 });
 
-// GET request for list of all ORDER
+// GET request for list of all PRODUCTS
 exports.product_list = asyncHandler(async (req, res, next) => {
-    res.statusCode(200);
-    res.type("text/plain");
-    res.send("GET - list of all ORDER NOT IMPLEMENT");
+    const products = await Product.find().exec();
+
+    if(products === null) {
+        return next(new Error('Product list not found').status(404));
+    } else {
+        res.status(200).json({
+            products: products
+        })
+    }
 });
