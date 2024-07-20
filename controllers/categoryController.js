@@ -44,7 +44,7 @@ exports.category_create_get = [
         try {
           const save_category = await new_category.save();
           res.status(201).json({
-            category: save_category
+            category: save_category,
           });
         } catch (error) {
           res.status(500).json({
@@ -116,22 +116,22 @@ exports.category_create_post = [
 exports.category_delete_get = asyncHandler(async (req, res, next) => {
   const [category, cate_products] = await Promise.all([
     Category.findById(req.params.id).exec(),
-    Product.find({category: req.params.id}).exec()
+    Product.find({ category: req.params.id }).exec(),
   ]);
 
-  if(category === null) {
-    return next(new Error('Category not found'));
+  if (category === null) {
+    return next(new Error("Category not found"));
   }
 
-  if(cate_products.length > 0) {
+  if (cate_products.length > 0) {
     res.status(400).json({
       category: category,
-      category_products: cate_products
+      category_products: cate_products,
     });
   } else {
     Category.findByIdAndDelete(req.params.id).exec();
     res.status(201).json({
-      deleted_category: category
+      deleted_category: category,
     });
   }
 });
@@ -145,33 +145,68 @@ exports.category_delete_post = [
 
     const [category, cate_products] = await Promise.all([
       Category.findById(req.body.id).exec(),
-      Product.find({category: req.body.id}, 'name description').exec()
+      Product.find({ category: req.body.id }, "name description").exec(),
     ]);
-  
-    if(category === null) {
-      return next(new Error('Category not found'));
-    }
-  
-    if(cate_products.length > 0) {
-      res.status(400).json({
-        category: category,
-        category_products: cate_products
+
+    // Return error if data is not valid
+    if (!errors.isEmpty()) {
+      // There are errors. Render the form again with sanitized values/error messages.
+      res.send({
+        errors: errors.array(),
       });
+      return;
     } else {
-      await Category.findByIdAndDelete(req.body.id).exec();
-      res.status(201).json({
-        deleted_category: category
-      })
+      if (category === null) {
+        return next(new Error("Category not found"));
+      }
+
+      if (cate_products.length > 0) {
+        res.status(400).json({
+          category: category,
+          category_products: cate_products,
+        });
+      } else {
+        await Category.findByIdAndDelete(req.body.id).exec();
+        res.status(201).json({
+          deleted_category: category,
+        });
+      }
     }
-  })
-]
+  }),
+];
 
 // GET request to update Category
-exports.category_update_get = asyncHandler(async (req, res, next) => {
-  res.status(404);
-  res.type("text/plain");
-  res.send("GET - update Category NOT ALLOWED");
-});
+exports.category_update_get = [
+  query("name").trim().escape(),
+  query("description").trim().escape(),
+
+  asyncHandler(async (req, res, next) => {
+    const error = validationResult(req);
+
+    const category = await Category.findById(req.params.id).exec();
+    if (!errors.isEmpty()) {
+      // There are errors. Render the form again with sanitized values/error messages.
+      res.send({
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      if (category === null) {
+        return next(new Error("Category not found"));
+      }
+      const new_cateName = url.parse(req.url, true).query.name;
+      const new_cateDesc = url.parse(req.url, true).query.description;
+
+      const saved_category = await Category.findByIdAndUpdate(req.params.id, {
+        name: new_cateName,
+        description: new_cateDesc,
+      }).exec();
+      res.status(201).json({
+        updated_category: saved_category,
+      });
+    }
+  }),
+];
 
 // POST request to update Category
 exports.category_update_post = asyncHandler(async (req, res, next) => {
