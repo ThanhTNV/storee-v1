@@ -209,11 +209,37 @@ exports.category_update_get = [
 ];
 
 // POST request to update Category
-exports.category_update_post = asyncHandler(async (req, res, next) => {
-  res.status(200);
-  res.type("text/plain");
-  res.send("POST - CREATE CATEGORY NOT IMPLEMENT");
-});
+exports.category_update_post = [
+  body("name").trim().length({ min: 1 }).escape(),
+  body("description").trim().escape(),
+
+  asyncHandler(async (req, res, next) => {
+    const error = validationResult(req);
+
+    const category = await Category.findById(req.params.id).exec();
+    if (!errors.isEmpty()) {
+      // There are errors. Render the form again with sanitized values/error messages.
+      res.send({
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      if (category === null) {
+        return next(new Error("Category not found"));
+      }
+      const new_cateName = url.parse(req.url, true).query.name;
+      const new_cateDesc = url.parse(req.url, true).query.description;
+
+      const saved_category = await Category.findByIdAndUpdate(req.params.id, {
+        name: new_cateName,
+        description: new_cateDesc,
+      }).exec();
+      res.status(201).json({
+        updated_category: saved_category
+      })
+    }
+  }),
+];
 
 // GET request for one Category
 exports.category_detail = asyncHandler(async (req, res, next) => {
