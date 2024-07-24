@@ -43,7 +43,7 @@ exports.category_create_get = [
         //Save to database
         try {
           const save_category = await new_category.save();
-          res.status(201).json({
+          res.status(200).json({
             category: save_category,
           });
         } catch (error) {
@@ -124,13 +124,13 @@ exports.category_delete_get = asyncHandler(async (req, res, next) => {
   }
 
   if (cate_products.length > 0) {
-    res.status(400).json({
+    res.status(405).json({
       category: category,
       category_products: cate_products,
     });
   } else {
     Category.findByIdAndDelete(req.params.id).exec();
-    res.status(201).json({
+    res.status(200).json({
       deleted_category: category,
     });
   }
@@ -161,7 +161,7 @@ exports.category_delete_post = [
       }
 
       if (cate_products.length > 0) {
-        res.status(400).json({
+        res.status(405).json({
           category: category,
           category_products: cate_products,
         });
@@ -201,7 +201,7 @@ exports.category_update_get = [
         name: new_cateName,
         description: new_cateDesc,
       }).exec();
-      res.status(201).json({
+      res.status(200).json({
         updated_category: saved_category,
       });
     }
