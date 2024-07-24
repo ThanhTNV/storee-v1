@@ -210,7 +210,7 @@ exports.category_update_get = [
 
 // POST request to update Category
 exports.category_update_post = [
-  body("name").trim().length({ min: 1 }).escape(),
+  body("name").trim().isLength({ min: 1 }).escape(),
   body("description").trim().escape(),
 
   asyncHandler(async (req, res, next) => {
